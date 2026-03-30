@@ -1,0 +1,352 @@
+import { useState } from "react";
+import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, Sparkles, AlertTriangle, Bookmark, BookmarkCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export interface FinancialResponse {
+  query_type: "market" | "analysis" | "knowledge";
+  asset: {
+    symbol: string;
+    name: string;
+    industry?: string;
+  };
+  summary: string;
+  used_llm?: boolean;
+  key_metrics: {
+    price: number;
+    change_1d: number | null;
+    change_7d_pct: number | null;
+    high_52w?: number;
+    low_52w?: number;
+    pe_ratio?: number;
+    eps?: number;
+    beta?: number;
+    market_cap_bn?: number;
+    analyst_rating?: string;
+    volume_10d_avg?: number;
+  };
+  chart_data?: Array<{ date: string; price: number }>;
+  news?: Array<{ title: string; source: string; time: string; url?: string }>;
+  sources?: Array<{ title: string; url?: string; type?: string }>;
+  confidence: "high" | "medium" | "low";
+  risk_note?: string;
+}
+
+interface ResponseCardProps {
+  response: FinancialResponse;
+  isSaved?: boolean;
+  onSave?: () => void;
+}
+
+const ANSWER_LABEL: Record<FinancialResponse["query_type"], string> = {
+  market: "Market Summary",
+  analysis: "Analysis",
+  knowledge: "Answer",
+};
+
+const ANALYST_COLOR: Record<string, string> = {
+  "Strong Buy": "bg-emerald-900/40 text-emerald-300",
+  "Buy":        "bg-green-900/40 text-green-300",
+  "Hold":       "bg-amber-900/30 text-amber-300",
+  "Sell":       "bg-red-900/30 text-red-300",
+  "Strong Sell":"bg-red-900/50 text-red-400",
+};
+
+export function ResponseCard({ response, isSaved, onSave }: ResponseCardProps) {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(["metrics", "chart", "news"])
+  );
+
+  const toggleSection = (section: string) => {
+    const next = new Set(expandedSections);
+    next.has(section) ? next.delete(section) : next.add(section);
+    setExpandedSections(next);
+  };
+
+  const answerLabel = ANSWER_LABEL[response.query_type];
+  const m = response.key_metrics;
+  const analystColor = m.analyst_rating ? (ANALYST_COLOR[m.analyst_rating] ?? "bg-muted text-muted-foreground") : "";
+
+  return (
+    <div className="mb-6 animate-fade-in">
+      {/* Header */}
+      <div className="bg-card border border-border rounded-lg p-4 mb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-bold text-foreground">{response.asset.name}</h3>
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <p className="text-sm text-muted-foreground">{response.asset.symbol}</p>
+              {response.asset.industry && (
+                <span className="text-xs text-muted-foreground/70 bg-muted/30 px-1.5 py-0.5 rounded">
+                  {response.asset.industry}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {m.analyst_rating && (
+              <span className={cn("px-2 py-1 rounded-full text-xs font-semibold", analystColor)}>
+                {m.analyst_rating}
+              </span>
+            )}
+            {response.used_llm && (
+              <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-violet-900/30 text-violet-300">
+                <Sparkles size={12} /> AI
+              </span>
+            )}
+            <span className={cn(
+              "px-2.5 py-1 rounded-full text-xs font-semibold uppercase",
+              response.query_type === "market" && "bg-blue-900/30 text-blue-200",
+              response.query_type === "analysis" && "bg-purple-900/30 text-purple-200",
+              response.query_type === "knowledge" && "bg-amber-900/30 text-amber-200"
+            )}>
+              {response.query_type}
+            </span>
+            {onSave && (
+              <button
+                onClick={onSave}
+                title={isSaved ? "Saved" : "Save this response"}
+                className={cn(
+                  "p-1.5 rounded-lg transition-colors",
+                  isSaved
+                    ? "text-amber-400 bg-amber-900/20"
+                    : "text-muted-foreground hover:text-amber-400 hover:bg-amber-900/20"
+                )}
+              >
+                {isSaved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Answer — always visible */}
+      <div className="bg-card border border-border rounded-lg mb-3 overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h4 className="font-semibold text-foreground text-sm">{answerLabel}</h4>
+          {response.used_llm && (
+            <span className="text-xs text-violet-400 flex items-center gap-1">
+              <Sparkles size={11} /> Generated by AI
+            </span>
+          )}
+        </div>
+        <div className="px-4 py-4 bg-surface space-y-3">
+          <p className="text-sm leading-relaxed text-foreground">{response.summary}</p>
+          {response.risk_note && (
+            <div className="flex items-start gap-2 text-xs text-amber-400/90 bg-amber-900/10 border border-amber-800/30 rounded px-3 py-2">
+              <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
+              <span>{response.risk_note}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <Section title="Key Metrics" isExpanded={expandedSections.has("metrics")} onToggle={() => toggleSection("metrics")}>
+        <div className="space-y-3">
+          {/* Row 1: price + daily/weekly change */}
+          <div className="grid grid-cols-3 gap-3">
+            <MetricCard label="Current Price" value={`$${m.price.toFixed(2)}`} subtext="USD" />
+            <MetricCard
+              label="1D Change" subtext={m.change_1d != null ? "%" : ""}
+              value={m.change_1d != null ? `${m.change_1d > 0 ? "+" : ""}${m.change_1d.toFixed(2)}` : "—"}
+              isPositive={m.change_1d != null ? m.change_1d > 0 : undefined}
+              icon={m.change_1d != null ? (m.change_1d > 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />) : undefined}
+            />
+            <MetricCard
+              label="5D Change" subtext={m.change_7d_pct != null ? "%" : ""}
+              value={m.change_7d_pct != null ? `${m.change_7d_pct > 0 ? "+" : ""}${m.change_7d_pct.toFixed(2)}` : "—"}
+              isPositive={m.change_7d_pct != null ? m.change_7d_pct > 0 : undefined}
+              icon={m.change_7d_pct != null ? (m.change_7d_pct > 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />) : undefined}
+            />
+          </div>
+
+          {/* Row 2: 52w range */}
+          {(m.high_52w != null || m.low_52w != null) && (
+            <div className="grid grid-cols-2 gap-3">
+              {m.high_52w != null && <MetricCard label="52W High" value={`$${m.high_52w.toFixed(2)}`} subtext="USD" />}
+              {m.low_52w != null  && <MetricCard label="52W Low"  value={`$${m.low_52w.toFixed(2)}`}  subtext="USD" />}
+            </div>
+          )}
+
+          {/* Row 3: fundamentals */}
+          {(m.pe_ratio != null || m.eps != null || m.beta != null || m.market_cap_bn != null) && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {m.pe_ratio      != null && <MetricCard label="P/E (TTM)"   value={m.pe_ratio.toFixed(1)}       subtext="x" />}
+              {m.eps           != null && <MetricCard label="EPS"          value={`$${m.eps.toFixed(2)}`}      subtext="" />}
+              {m.beta          != null && <MetricCard label="Beta"         value={m.beta.toFixed(2)}           subtext="" />}
+              {m.market_cap_bn != null && <MetricCard label="Market Cap"   value={`$${m.market_cap_bn.toFixed(1)}B`} subtext="" />}
+            </div>
+          )}
+
+          {/* Volume */}
+          {m.volume_10d_avg != null && (
+            <div className="text-xs text-muted-foreground px-1">
+              10-day avg volume: <span className="text-foreground font-medium">{m.volume_10d_avg.toFixed(1)}M shares</span>
+            </div>
+          )}
+        </div>
+      </Section>
+
+      {/* Chart */}
+      {response.chart_data && response.chart_data.length > 1 && (
+        <Section title="Price Chart" isExpanded={expandedSections.has("chart")} onToggle={() => toggleSection("chart")}>
+          <SparklineChart data={response.chart_data} />
+        </Section>
+      )}
+
+      {/* News */}
+      {response.news && response.news.length > 0 && (
+        <Section title="Recent News" isExpanded={expandedSections.has("news")} onToggle={() => toggleSection("news")}>
+          <div className="space-y-2">
+            {response.news.map((item, idx) => <NewsItem key={idx} item={item} />)}
+          </div>
+        </Section>
+      )}
+
+      {/* Confidence */}
+      <Section title="Confidence" isExpanded={expandedSections.has("confidence")} onToggle={() => toggleSection("confidence")}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Signal quality</span>
+          <span className={cn(
+            "px-3 py-1 rounded-full text-xs font-semibold uppercase",
+            response.confidence === "high" && "bg-positive/20 text-positive-light",
+            response.confidence === "medium" && "bg-amber-900/30 text-amber-200",
+            response.confidence === "low" && "bg-negative/20 text-negative-light"
+          )}>
+            {response.confidence}
+          </span>
+        </div>
+      </Section>
+
+      {/* Sources */}
+      {response.sources && response.sources.length > 0 && (
+        <Section title="Sources" isExpanded={expandedSections.has("sources")} onToggle={() => toggleSection("sources")}>
+          <div className="space-y-2">
+            {response.sources.map((source, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                {source.url && source.url.length > 0 ? (
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                    {source.title}
+                  </a>
+                ) : (
+                  <span className="text-sm text-muted-foreground">{source.title}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+    </div>
+  );
+}
+
+// ── Section wrapper ───────────────────────────────────────────────────────────
+
+interface SectionProps { title: string; isExpanded: boolean; onToggle: () => void; children: React.ReactNode }
+
+function Section({ title, isExpanded, onToggle, children }: SectionProps) {
+  return (
+    <div className="bg-card border border-border rounded-lg mb-3 overflow-hidden">
+      <button onClick={onToggle} className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface transition-colors">
+        <h4 className="font-semibold text-foreground text-sm">{title}</h4>
+        {isExpanded ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
+      </button>
+      {isExpanded && <div className="px-4 py-3 border-t border-border bg-surface">{children}</div>}
+    </div>
+  );
+}
+
+// ── Metric card ───────────────────────────────────────────────────────────────
+
+interface MetricCardProps { label: string; value: string; subtext: string; isPositive?: boolean; icon?: React.ReactNode }
+
+function MetricCard({ label, value, subtext, isPositive, icon }: MetricCardProps) {
+  return (
+    <div className="bg-surface rounded-lg p-3 border border-border">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <div className="flex items-end gap-1">
+        {icon && <span className={cn(isPositive ? "text-positive" : "text-negative")}>{icon}</span>}
+        <p className={cn("text-lg font-bold",
+          isPositive ? "text-positive" : isPositive === false ? "text-negative" : "text-foreground"
+        )}>
+          {value}
+        </p>
+        {subtext && <span className="text-xs text-muted-foreground mb-0.5">{subtext}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── SVG sparkline chart with real timeframe filtering ─────────────────────────
+
+type ChartPoint = { date: string; price: number };
+
+function SparklineChart({ data }: { data: ChartPoint[] }) {
+  const [timeframe, setTimeframe] = useState<"1D" | "7D" | "All">("All");
+
+  const filtered = timeframe === "All" ? data : data.slice(-(timeframe === "1D" ? 1 : 7));
+
+  if (filtered.length < 2) {
+    return <p className="text-xs text-muted-foreground text-center py-6">Not enough data for {timeframe} view</p>;
+  }
+
+  const prices = filtered.map((p) => p.price);
+  const minP = Math.min(...prices), maxP = Math.max(...prices), range = maxP - minP || 1;
+  const W = 400, H = 100, PAD = 6;
+
+  const points = filtered.map((pt, i) => {
+    const x = PAD + (i / (filtered.length - 1)) * (W - PAD * 2);
+    const y = H - PAD - ((pt.price - minP) / range) * (H - PAD * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+
+  const isUp = filtered[filtered.length - 1]!.price >= filtered[0]!.price;
+  const strokeColor = isUp ? "#22c55e" : "#ef4444";
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-3">
+        {(["1D", "7D", "All"] as const).map((tf) => (
+          <button key={tf} onClick={() => setTimeframe(tf)} className={cn(
+            "px-3 py-1.5 rounded text-xs font-medium transition-colors",
+            timeframe === tf ? "bg-primary text-primary-foreground" : "bg-border text-muted-foreground hover:bg-border/50"
+          )}>
+            {tf}
+          </button>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-28 rounded bg-background" preserveAspectRatio="none">
+        <polyline points={points} fill="none" stroke={strokeColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+      <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+        <span>{filtered[0]?.date}</span>
+        <span className={isUp ? "text-positive" : "text-negative"}>${minP.toFixed(2)} – ${maxP.toFixed(2)}</span>
+        <span>{filtered[filtered.length - 1]?.date}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── News item ─────────────────────────────────────────────────────────────────
+
+function NewsItem({ item }: { item: { title: string; source: string; time: string; url?: string } }) {
+  const inner = (
+    <>
+      <p className="text-sm font-medium text-foreground mb-1">{item.title}</p>
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{item.source}</span>
+        <span className="text-xs text-muted-foreground">{item.time}</span>
+      </div>
+    </>
+  );
+
+  return item.url ? (
+    <a href={item.url} target="_blank" rel="noopener noreferrer"
+      className="block bg-surface border border-border rounded p-3 hover:border-primary/50 transition-colors">
+      {inner}
+    </a>
+  ) : (
+    <div className="bg-surface border border-border rounded p-3">{inner}</div>
+  );
+}

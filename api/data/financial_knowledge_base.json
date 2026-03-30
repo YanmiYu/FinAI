@@ -1,0 +1,158 @@
+{
+  "financial_knowledge_base": [
+    {
+      "id": "fin_001",
+      "term_en": "Stock",
+      "term_zh": "股票",
+      "definition_en": "A stock represents ownership in a company and constitutes a claim on part of the company's assets and earnings.",
+      "definition_zh": "股票代表对一家公司的所有权，并对公司的资产和收益拥有部分索取权。",
+      "category": "Equity",
+      "keywords": ["equity", "share", "ownership", "stock price"],
+      "example": {
+        "en": "If you buy Apple stock, you own a small part of Apple.",
+        "zh": "如果你购买苹果公司的股票，你就拥有该公司的一小部分。"
+      },
+      "related_terms": ["Dividend", "Market Cap", "IPO"]
+    },
+    {
+      "id": "fin_002",
+      "term_en": "Market Capitalization",
+      "term_zh": "市值",
+      "definition_en": "Market capitalization is the total value of a company's outstanding shares of stock.",
+      "definition_zh": "市值是公司所有已发行股票的总市场价值。",
+      "category": "Equity",
+      "keywords": ["market cap", "valuation", "company size"],
+      "example": {
+        "en": "Tesla's market cap exceeds many traditional automakers.",
+        "zh": "特斯拉的市值超过许多传统汽车制造商。"
+      },
+      "related_terms": ["Stock Price", "Shares Outstanding"]
+    },
+    {
+      "id": "fin_003",
+      "term_en": "Price-to-Earnings Ratio (P/E)",
+      "term_zh": "市盈率",
+      "definition_en": "The P/E ratio measures a company's current share price relative to its earnings per share.",
+      "definition_zh": "市盈率是公司当前股价与每股收益之间的比率。",
+      "category": "Valuation",
+      "keywords": ["PE ratio", "valuation", "earnings"],
+      "example": {
+        "en": "A high P/E ratio may indicate that a stock is overvalued.",
+        "zh": "较高的市盈率可能意味着股票被高估。"
+      },
+      "related_terms": ["EPS", "Valuation", "Growth Stock"]
+    },
+    {
+      "id": "fin_004",
+      "term_en": "Dividend",
+      "term_zh": "股息",
+      "definition_en": "A dividend is a portion of a company's earnings distributed to shareholders.",
+      "definition_zh": "股息是公司向股东分配的一部分利润。",
+      "category": "Income",
+      "keywords": ["dividend yield", "income investing"],
+      "example": {
+        "en": "Investors receive dividends as passive income.",
+        "zh": "投资者可以通过股息获得被动收入。"
+      },
+      "related_terms": ["Yield", "Stock", "Cash Flow"]
+    },
+    {
+      "id": "fin_005",
+      "term_en": "Volatility",
+      "term_zh": "波动率",
+      "definition_en": "Volatility measures how much the price of an asset fluctuates over time.",
+      "definition_zh": "波动率衡量资产价格随时间变化的幅度。",
+      "category": "Risk",
+      "keywords": ["risk", "price fluctuation", "variance"],
+      "example": {
+        "en": "Cryptocurrencies have higher volatility than stocks.",
+        "zh": "加密货币的波动率通常高于股票。"
+      },
+      "related_terms": ["Risk", "Standard Deviation"]
+    },
+    {
+      "id": "fin_006",
+      "term_en": "Interest Rate",
+      "term_zh": "利率",
+      "definition_en": "An interest rate is the amount charged by lenders to borrowers, expressed as a percentage of the principal.",
+      "definition_zh": "利率是贷款人向借款人收取的费用，以本金的百分比表示。",
+      "category": "Macro",
+      "keywords": ["fed rate", "borrowing cost", "monetary policy"],
+      "example": {
+        "en": "Rising interest rates can slow down economic growth.",
+        "zh": "利率上升可能会减缓经济增长。"
+      },
+      "related_terms": ["Inflation", "Bond Yield"]
+    },
+    {
+      "id": "fin_007",
+      "term_en": "Inflation",
+      "term_zh": "通货膨胀",
+      "definition_en": "Inflation is the rate at which the general level of prices for goods and services rises.",
+      "definition_zh": "通货膨胀是商品和服务价格总体水平上涨的速度。",
+      "category": "Macro",
+      "keywords": ["CPI", "price increase", "purchasing power"],
+      "example": {
+        "en": "High inflation reduces purchasing power.",
+        "zh": "高通胀会降低购买力。"
+      },
+      "related_terms": ["Interest Rate", "CPI"]
+    },
+    {
+      "id": "fin_008",
+      "term_en": "Exchange-Traded Fund (ETF)",
+      "term_zh": "交易型开放式指数基金",
+      "definition_en": "An ETF is a type of fund that tracks an index, commodity, or basket of assets and trades on stock exchanges.",
+      "definition_zh": "ETF是一种跟踪指数、商品或资产组合的基金，并在交易所交易。",
+      "category": "Fund",
+      "keywords": ["index fund", "diversification", "passive investing"],
+      "example": {
+        "en": "SPY is a popular ETF tracking the S&P 500.",
+        "zh": "SPY是跟踪标普500指数的热门ETF。"
+      },
+      "related_terms": ["Index Fund", "Portfolio"]
+    },
+    {
+      "id": "fin_009",
+      "term_en": "Liquidity",
+      "term_zh": "流动性",
+      "definition_en": "Liquidity refers to how easily an asset can be converted into cash without affecting its price.",
+      "definition_zh": "流动性指资产在不影响价格的情况下转换为现金的难易程度。",
+      "category": "Market",
+      "keywords": ["trading volume", "bid-ask spread"],
+      "example": {
+        "en": "Stocks are generally more liquid than real estate.",
+        "zh": "股票通常比房地产更具流动性。"
+      },
+      "related_terms": ["Volume", "Market Depth"]
+    },
+    {
+      "id": "fin_010",
+      "term_en": "Bull Market",
+      "term_zh": "牛市",
+      "definition_en": "A bull market is a period during which prices are rising or expected to rise.",
+      "definition_zh": "牛市是价格持续上涨或预期上涨的市场阶段。",
+      "category": "Market",
+      "keywords": ["uptrend", "growth", "positive sentiment"],
+      "example": {
+        "en": "Tech stocks surged during the bull market.",
+        "zh": "科技股在牛市期间大幅上涨。"
+      },
+      "related_terms": ["Bear Market", "Trend"]
+    },
+    {
+      "id": "fin_011",
+      "term_en": "Mia Coin",
+      "term_zh": "Mia数字货币",
+      "definition_en": "Mia Coin is a fictional digital asset designed to track and reflect the performance of major technology stocks. Its value is algorithmically linked to a basket of leading tech companies, making it a hybrid between cryptocurrency and equity index exposure.",
+      "definition_zh": "Mia数字货币是一种虚构的数字资产，其价格与主要科技公司的股票表现挂钩。它通过算法跟踪一篮子领先科技企业的表现，兼具加密货币与股票指数的特性。",
+      "category": "Digital Asset",
+      "keywords": ["crypto", "tech stocks", "synthetic asset", "tokenized equity", "AI market"],
+      "example": {
+        "en": "When major tech stocks like Apple and Nvidia rise, Mia Coin tends to increase in value as well.",
+        "zh": "当苹果和英伟达等科技股上涨时，Mia数字货币的价格通常也会随之上升。"
+      },
+      "related_terms": ["ETF", "Nasdaq Index", "Tokenized Assets", "Volatility"]
+    }
+  ]
+}

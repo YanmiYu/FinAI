@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinAI — Financial Assistant</title>
+
+    <!--
+      Polyfill crypto.randomUUID before any ES module loads.
+      Required by @tanstack/react-query v5 in non-secure or older browser contexts.
+      Uses crypto.getRandomValues (available everywhere) as the entropy source.
+    -->
+    <script>
+      if (
+        typeof crypto !== "undefined" &&
+        typeof crypto.randomUUID !== "function"
+      ) {
+        crypto.randomUUID = function () {
+          var b = new Uint8Array(16);
+          crypto.getRandomValues(b);
+          b[6] = (b[6] & 0x0f) | 0x40;
+          b[8] = (b[8] & 0x3f) | 0x80;
+          var h = Array.from(b)
+            .map(function (x) {
+              return x.toString(16).padStart(2, "0");
+            })
+            .join("");
+          return (
+            h.slice(0, 8) +
+            "-" +
+            h.slice(8, 12) +
+            "-" +
+            h.slice(12, 16) +
+            "-" +
+            h.slice(16, 20) +
+            "-" +
+            h.slice(20)
+          );
+        };
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/client/App.tsx"></script>
+  </body>
+</html>
