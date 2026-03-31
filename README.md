@@ -309,6 +309,6 @@ pnpm dev
 
 ### 演示视频
 
-- 3分钟演示链接（提交前替换占位符）：[Demo Video](https://example.com/finai-demo)
+- 3分钟演示链接（提交前替换占位符）：[Demo Video](https://brown.zoom.us/rec/share/H8QEP89x4hEHI78iFtzOTHWwI91iNyIyO8D1tBqC9gmOVmq_DZ3Ob6IrKUC1FIpD.6D7R1UsWA_nNsNCM?startTime=1774937068000)
 
 [返回顶部](#top)
