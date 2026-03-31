@@ -1,126 +1,174 @@
-# Financial Asset QA System
+# FinAI - Financial Asset QA System / 金融资产问答系统
 
-A full-stack LLM-powered financial QA system. Ask questions about US stocks and get real-time price data, trend analysis, and AI-generated summaries — with full traceability and zero hallucinated numbers.
+Full-stack LLM-powered financial QA application with deterministic routing, market data integration, RAG glossary retrieval, and structured traceable responses.  
+一个全栈金融问答系统，支持确定性路由、行情数据接入、RAG术语检索与可追踪的结构化响应。
 
-## Architecture
+## Overview / 项目概览
 
+- **Goal / 目标**: answer asset price/trend questions, explain movement causes, and provide glossary-grounded financial knowledge.
+- **Core principle / 核心原则**: objective facts come from APIs/KB, while LLM focuses on summarization and explanation.
+- **Contract-first / 契约优先**: frontend renders backend JSON contract and avoids business-logic branching.
+
+## System Architecture / 系统架构
+
+```mermaid
+flowchart TD
+  UI[Frontend: React + Vite] -->|POST /api/query| API[Backend: Express]
+  API --> Router[Query Router]
+  Router -->|market| Market[Market Pipeline]
+  Router -->|analysis| Analysis[Analysis Pipeline]
+  Router -->|knowledge| Knowledge[Knowledge Pipeline]
+
+  Market --> Finnhub[(Finnhub)]
+  Analysis --> Finnhub
+  Analysis --> News[(Finnhub News)]
+  Knowledge --> RAG[RAG Retrieval]
+  RAG --> Firestore[(Firestore KB + Chunks)]
+  Knowledge --> Web[Web Retrieval]
+
+  Market --> LLM[OpenAI]
+  Analysis --> LLM
+  Knowledge --> LLM
+
+  LLM --> Contract[Structured JSON v1]
+  Contract --> UI
 ```
-Frontend (React + Vite, port 8080)
-        ↓  proxy /api/query
-Backend API (Express, port 3001)
-        ↓
-Query Router (rule-based + LLM fallback)
-   ├── Market Pipeline  → Finnhub quote + candles
-   └── Analysis Pipeline → Finnhub quote + news → LLM reasoning
-        ↓
-Structured JSON Response (v1 contract)
-```
 
-## Prerequisites
+## Four-Scenario Routing / 四象限路由逻辑
 
-- Node.js 18+
-- [pnpm](https://pnpm.io) (for the frontend)
-- A [Finnhub](https://finnhub.io/dashboard) free API key
-- (Optional) An OpenAI API key for LLM summaries
-- Firebase project with Firestore (for knowledge-base RAG)
+1. **Stock + Glossary / 有股票 + 有术语**  
+   - Run market/analysis pipeline **and** RAG retrieval.
+2. **Stock only / 只有股票**  
+   - Run market/analysis pipeline only.
+3. **Glossary only / 只有术语**  
+   - Run knowledge answer with RAG context.
+4. **Neither / 两者都没有**  
+   - Run open fallback with web retrieval and include web sources.
 
-## Setup
+## Tech Stack / 技术栈
 
-**1. Install backend dependencies** (from the project root):
+- **Frontend**: React, Vite, TypeScript, Tailwind, Firebase Auth/Firestore client
+- **Backend**: Node.js, Express, TypeScript, Zod
+- **LLM**: OpenAI Chat Completions
+- **Market data**: Finnhub (`quote`, `stock/metric`, `company-news`)
+- **Knowledge data**: Firebase Firestore (`financial_knowledge_base`, `financial_knowledge_chunks`)
+- **Testing**: Node test runner (`tsx --test`) + TypeScript checks
+
+## Prompt Design / Prompt设计思路
+
+- **Market prompt / 行情问答**: answer directly using provided metrics only; no speculative numbers.
+- **Analysis prompt / 分析问答**: combine metrics and news; cite uncertainty when evidence is weak.
+- **Knowledge prompt / 知识问答**: prioritize KB terms and cite `[KB-...]`; supplement with `[WEB-...]` when needed.
+- **Open fallback / 开放式兜底**: if no ticker/KB match, answer cautiously from web snippets with citations.
+
+## Data Sources and Trust Strategy / 数据来源与可信策略
+
+- **Objective data / 客观数据**: `key_metrics`, `news`, and source metadata are retrieved from APIs/Firestore.
+- **Controlled generation / 受控生成**: LLM does not fetch market data; it summarizes/explains provided context.
+- **Traceability / 可追踪性**: each response includes `trace` steps and `correlation_id`.
+- **Source transparency / 来源透明**: `sources` includes `market_api`, `news_api`, `financial_knowledge_base`, `web_search`, and router metadata.
+
+## API Contract (v1) / 接口契约（v1）
+
+`POST /api/query` returns structured JSON including:
+
+- `query_type`, `asset`
+- `summary`, `facts`, `analysis`
+- `key_metrics` (including `change_30d_pct`)
+- `chart_data`, `news`, `sources`
+- `confidence`, `risk_note`
+- `trace`, `correlation_id`
+
+See `shared/queryContract.ts` for exact schema.
+
+## Local Setup / 本地运行
+
+### 1) Install dependencies / 安装依赖
 
 ```bash
 npm install
+cd frontend && pnpm install && cd ..
 ```
 
-**2. Configure environment variables:**
+### 2) Configure environment / 配置环境变量
+
+Create `.env` in project root:
 
 ```bash
-cp .env.example .env
+FINNHUB_API_KEY=...
+OPENAI_API_KEY=...
+LLM_MODEL=gpt-5.4-nano
+LLM_TEMPERATURE=0.2
+REQUEST_TIMEOUT_MS=10000
+
+FIREBASE_PROJECT_ID=...
+GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
 ```
 
-Open `.env` and fill in your keys:
-
-```
-FINNHUB_API_KEY=your_finnhub_key_here
-OPENAI_API_KEY=your_openai_key_here   # optional — fallback summary used if absent
-FIREBASE_SERVICE_ACCOUNT_JSON={...}   # required for RAG KB retrieval/seed
-```
-
-For Firebase Admin credentials, you can use either:
-- `FIREBASE_SERVICE_ACCOUNT_JSON` (single JSON string), or
-- `FIREBASE_PROJECT_ID` + `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`
-
-**3. Seed the financial glossary into Firestore (one-time):**
+### 3) Seed and embed glossary / 初始化术语库与向量
 
 ```bash
 npm run rag:seed
+npm run rag:embed
 ```
 
-This writes starter terms into collection: `financial_knowledge_base`.
-You can add more terms later by adding docs to this same collection.
-**4. Install frontend dependencies:**
+### 4) Start services / 启动前后端
 
-```bash
-cd frontend
-pnpm install
-cd ..
-```
-
-## Running
-
-You need **two terminals** running simultaneously.
-
-**Terminal 1 — Backend** (port 3001):
+Terminal A (backend):
 
 ```bash
 npm run server:dev
 ```
 
-You should see:
-```
-[nodemon] starting `tsx api/server.ts`
-[dotenv] injecting env (8) from .env
-Server ready on port 3001
-```
-
-**Terminal 2 — Frontend** (port 8080):
+Terminal B (frontend):
 
 ```bash
 cd frontend
 pnpm dev
 ```
 
-Then open **http://localhost:8080** in your browser.
+Open `http://localhost:8080`.
 
-## Example queries
+## Scripts / 常用命令
 
-| Query | Pipeline |
-|---|---|
-| `What is the price of AAPL?` | market |
-| `$TSLA 7 day trend` | market |
-| `Why did NVDA go up today?` | analysis (+ news) |
-| `What is P/E ratio?` | knowledge |
+- `npm run server:dev` - backend dev server
+- `npm run check` - type check (backend/shared)
+- `npm run test` - backend tests
+- `npm run rag:seed` - seed glossary to Firestore
+- `npm run rag:embed` - build chunk embeddings
+- `cd frontend && pnpm dev` - frontend dev server
+- `cd frontend && pnpm typecheck` - frontend type check
 
-## Available scripts
+## Monitoring / 监控
 
-| Command | Description |
-|---|---|
-| `npm run server:dev` | Start backend with hot-reload (nodemon) |
-| `npm run test` | Run backend unit tests |
-| `npm run check` | TypeScript type check (backend + shared) |
-| `npm run rag:seed` | Seed Firestore `financial_knowledge_base` |
-| `cd frontend && pnpm dev` | Start frontend dev server |
-| `cd frontend && pnpm typecheck` | TypeScript type check (frontend) |
+- `GET /api/monitoring/pipeline`: JSON snapshot (error rate/latency by query type)
+- `GET /api/monitoring/dashboard`: lightweight HTML dashboard
 
-## API
+## Evaluation Alignment / 与作业要求对齐
 
-**POST** `http://localhost:3001/api/query`
+- **Frontend engineering**: interactive chat UI, history/saved sessions, source badges
+- **Backend architecture**: deterministic router + explicit pipeline orchestration
+- **LLM integration**: prompt-constrained generation with multi-context inputs
+- **RAG quality**: vector retrieval + lexical reranker + source citation
+- **Data reliability**: external APIs + trace/debug fields + uncertainty notes
 
-```json
-{ "query": "What is the price of AAPL?" }
-```
+## Security Note / 安全说明
 
-Returns a structured `v1` JSON response with `query_type`, `asset`, `summary`, `key_metrics`, `chart_data`, `news`, `sources`, `confidence`, and a `trace` of every pipeline step.
+- Never commit `.env` or credential files.
+- `.gitignore` already blocks env files and common key formats.
+- If a secret was exposed, rotate/revoke it immediately.
 
-See `plan.md` and `shared/queryContract.ts` for the full contract.
-# FinAI
+## Optimization & Extension Ideas / 优化与扩展思考
+
+- Replace/augment web provider with higher-recall search APIs.
+- Add online reranker or hybrid retrieval feedback loop.
+- Persist monitoring metrics to TSDB (Prometheus/Grafana style dashboards).
+- Add e2e tests for bilingual mixed-query routing.
+
+## Demo Video / 演示视频
+
+- 3-minute walkthrough (replace placeholder): [Demo Video](https://example.com/finai-demo)
+
+## Repository Status / 交付状态
+
+- Remaining checklist and progress are tracked in `plan.md`.
