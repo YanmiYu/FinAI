@@ -3,6 +3,31 @@
 Full-stack LLM-powered financial QA application with deterministic routing, market data integration, RAG glossary retrieval, and structured traceable responses.  
 一个全栈金融问答系统，支持确定性路由、行情数据接入、RAG术语检索与可追踪的结构化响应。
 
+<a id="top"></a>
+
+## Language Switch / 语言切换
+
+- [English](#english-quick-view)
+- [中文](#中文快速阅读)
+
+<a id="english-quick-view"></a>
+### English Quick View
+
+- Start backend: `npm run server:dev`
+- Start frontend: `cd frontend && pnpm dev`
+- Main endpoint: `POST /api/query`
+- Monitoring: `GET /api/monitoring/pipeline`, `GET /api/monitoring/dashboard`
+- Jump to Chinese: [Go to 中文](#中文快速阅读)
+
+<a id="中文快速阅读"></a>
+### 中文快速阅读
+
+- 启动后端：`npm run server:dev`
+- 启动前端：`cd frontend && pnpm dev`
+- 主接口：`POST /api/query`
+- 监控接口：`GET /api/monitoring/pipeline`、`GET /api/monitoring/dashboard`
+- 跳转英文：[Go to English](#english-quick-view)
+
 ## Overview / 项目概览
 
 - **Goal / 目标**: answer asset price/trend questions, explain movement causes, and provide glossary-grounded financial knowledge.
